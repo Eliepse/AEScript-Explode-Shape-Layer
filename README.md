@@ -10,7 +10,7 @@ Select the Shape Layer you want to explode, launch the script... tadaaa !
 
 
 ## Installation
-Copy the `.jsx` file to the After Effets' default script folder or/then launch the script directly from After Effects panel : `File > Scripts > ...`
+Copy the `.jsx` file into your After Effets' "ScriptUI" folder.
 
 ## Compatibility
 Works on :
