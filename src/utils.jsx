@@ -4,7 +4,7 @@ function consLog(text) {
 }
 
 function listMatchNames(object) {
-    
+
     for(var i=1; i <= object.numProperties; i++) {
 
         var prop = object.property(i);
