@@ -1,4 +1,6 @@
-﻿function explodeLayer(layers) {
+/* @requires utils.jsx  */
+
+function explodeLayer(layers) {
 
     consLog('==============\n==============');
 
@@ -221,8 +223,6 @@ function createUI(thisObj) {
     return myPanel;
 
 }
-
-function consLog(text) { if (configs.log) $.writeln(text); }
 
 var configs = {
     title: 'Explode layer tool',
