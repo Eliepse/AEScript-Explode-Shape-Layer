@@ -23,7 +23,7 @@
     var contents = layer.property("Contents");
 
     // Browse through contents array
-    for(var i=1; i <= contents.numProperties; i++) {
+    for(var i = contents.numProperties; i > 0; i--) {
 
         // Get the original property
         var o_prop = contents.property(i);
