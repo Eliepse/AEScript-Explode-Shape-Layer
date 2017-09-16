@@ -261,10 +261,4 @@ function createUI(thisObj) {
 
 }
 
-var configs = {
-    title: 'Explode layer tool',
-    log : true,
-    itemAmountWarning : 50,
-};
-
 var myToolsPanel = createUI(this);

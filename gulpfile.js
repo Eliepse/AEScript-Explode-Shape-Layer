@@ -1,27 +1,46 @@
 var gulp = require('gulp');
+var pump = require('pump');
 var rename = require('gulp-rename');
 var uglify = require('gulp-uglify');
 var resolveDependencies = require('gulp-resolve-dependencies');
 var concat = require('gulp-concat');
 
-gulp.task('prod', function () {
+gulp.task('dev', function (cb) {
 
-    gulp.src('src/explode_shape_layer.jsx')
-    .pipe(resolveDependencies({
-        pattern: /\* @requires [\s-]*(.*\.jsx)/g
-    }))
-    .on('error', function(err) { console.log(err.message); })
-    .pipe(concat('explode_shape_layer.jsx'))
-    .pipe(rename('./explode_shape_layer.jsx'))
-    .pipe(gulp.dest('dist/'))
-    .pipe(rename('./explode_shape_layer.min.jsx'))
-    .pipe(uglify())
-    .pipe(gulp.dest('dist/'));
+    pump(
+        [
+            gulp.src(['src/config-dev.jsx', 'src/explode_shape_layer.jsx']),
+            resolveDependencies({ pattern: /\* @requires [\s-]*(.*\.jsx)/g }),
+            concat('explode_shape_layer.jsx'),
+            gulp.dest('dist/'),
+            rename('explode_shape_layer.min.jsx'),
+            uglify(),
+            gulp.dest('dist/')
+        ],
+        cb
+    );
 
 });
 
-gulp.task('watch', ['prod'], function () {
+gulp.task('prod', function (cb) {
 
-    gulp.watch('src/*', ['prod']);
+    pump(
+        [
+            gulp.src(['src/config-prod.jsx', 'src/explode_shape_layer.jsx']),
+            resolveDependencies({ pattern: /\* @requires [\s-]*(.*\.jsx)/g }),
+            concat('explode_shape_layer.jsx'),
+            gulp.dest('dist/'),
+            rename('explode_shape_layer.min.jsx'),
+            uglify(),
+            gulp.dest('dist/')
+        ],
+        cb
+    );
+
+});
+
+gulp.task('watch', ['dev'], function () {
+
+    gulp.watch('src/*', ['dev']);
 
 });

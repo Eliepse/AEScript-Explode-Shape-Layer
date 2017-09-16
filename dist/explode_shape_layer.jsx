@@ -1,10 +1,16 @@
+var configs = {
+    title: 'Explode layer tool',
+    log : true,
+    itemAmountWarning : 50,
+};
+
 function consLog(text) {
     if (configs.log)
         $.writeln(text);
 }
 
 function listMatchNames(object) {
-    consLog("LISTING ?")
+
     for(var i=1; i <= object.numProperties; i++) {
 
         var prop = object.property(i);
@@ -276,11 +282,5 @@ function createUI(thisObj) {
     return myPanel;
 
 }
-
-var configs = {
-    title: 'Explode layer tool',
-    log : true,
-    itemAmountWarning : 50,
-};
 
 var myToolsPanel = createUI(this);
