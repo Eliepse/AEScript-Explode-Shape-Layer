@@ -252,13 +252,13 @@ function createUI(that) {
 
     btn.onClick = function() {
 
-        var t_start = new Date().getTime();
+        var startTime = new Date().getTime();
 
         explode();
 
+        var execTime = new Date().getTime() - startTime;
 
-        var t_end = new Date().getTime();
-        consLog('Execution time : ' + (t_end - t_start) + 'ms');
+        consLog('Execution time : ' + Math.floor(execTime / 1000) + 's ' + (execTime % 1000) + 'ms');
 
     }
 

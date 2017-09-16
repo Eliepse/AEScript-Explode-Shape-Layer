@@ -1,6 +1,6 @@
 var configs = {
     title: 'Explode layer tool',
-    log : false,
+    log : true,
     itemAmountWarning : 50,
 };
 
@@ -10,7 +10,7 @@ function consLog(text) {
 }
 
 function listMatchNames(object) {
-    
+
     for(var i=1; i <= object.numProperties; i++) {
 
         var prop = object.property(i);
@@ -22,140 +22,154 @@ function listMatchNames(object) {
 
 /* @requires utils.jsx  */
 
-function explodeLayer(layers) {
+function explodeLayer(layer) {
 
     consLog('==============\n==============');
 
-    // Check if multiple layers selected
-    if(layers.length > 1) {
-        alert("Select a single shape layer");
-        return;
-    }
-
-    // Get the selected layer
-    var layer = layers[0];
-
-    // Check if the layer is null or wrong type
-    if(layer == undefined || layer.matchName !== 'ADBE Vector Layer') {
-        alert("Select a shape layer");
-        return;
-    }
-
-    var comp = layer.containingComp;
-
     // Get the elements of the original shape layer
     var contents = layer.property("Contents");
-    var n_layers = [];
+    var layers = [];
 
-    if(contents.numProperties > configs.itemAmountWarning && !confirm('You have more than ' + configs.itemAmountWarning + ' elements. Execution time might be long, are you sure you want to continue ?'))
-        return;
+    if(contents.numProperties > configs.itemAmountWarning) {
+
+        var go = confirm(
+            'You have more than ' + configs.itemAmountWarning + ' elements. '
+            + 'Execution time might be long, are you sure you want to continue ?'
+        );
+
+        if(!go) return;
+
+    }
 
 
     // Browse through contents array
     for(var i = contents.numProperties; i > 0; i--) {
 
         // Get the original property
-        var o_prop = contents.property(i);
+        var _prop = contents.property(i);
 
         // Skip the property if not enabled
-        if (o_prop.enabled) {
+        if (!_prop.enabled) continue;
 
-            // Duplicate the original layer and rename with property name
-            var n_layer = comp.layers.addShape();
-            n_layer.name = o_prop.name;
-            n_layer.enabled = false;
+        // Duplicate the original layer and rename with property name
+        var new_layer = emptyDuplicateLayer(layer)
 
-            n_layers.push(n_layer);
+        new_layer.name = layer.name + ' - ' + _prop.name;
+        new_layer.enabled = false;
 
-            copyLayerTransform(layer, n_layer);
+        layers.push(new_layer);
 
-            // Get the elements of the new layer
-            var n_layerContents = n_layer.property("Contents");
+        if (!new_layer.property("Contents").canAddProperty(_prop.matchName)) continue;
 
-            insertPropertyToContents(o_prop, n_layerContents, '')
+        var prop = new_layer.property("Contents").addProperty(_prop.matchName)
 
-        }
+        copyProperties(_prop, prop, '')
 
     }
 
-    for(var i = 0; i < n_layers.length; i++) {
-        n_layers[i].enabled = true;
+    for(var i = 0; i < layers.length; i++) {
+        layers[i].enabled = true;
     }
 
 }
 
-function insertPropertyToContents(prop, contents, prefix) {
+function explode() {
 
-    if (!contents.canAddProperty(prop.matchName))
-        return false;
+    // Check if multiple layers selected
+    if(app.project.activeItem.selectedLayers.length > 1) {
+        alert("Select a single shape layer");
+        return;
+    }
 
-    var n_prop = contents.addProperty(prop.matchName)
+    var selectedLayer = app.project.activeItem.selectedLayers[0];
 
-    for(var i=1; i <= prop.numProperties; i++) {
+    // Check if the layer is null or wrong type
+    if(selectedLayer == undefined || selectedLayer.matchName !== 'ADBE Vector Layer') {
+        alert("Select a shape layer");
+        return;
+    }
 
-        var innerProp = prop.property(i);
+    explodeLayer(selectedLayer);
 
-        if(innerProp.enabled && n_prop.canAddProperty(innerProp.matchName)) {
+}
 
-            consLog(prefix + innerProp.matchName);
+function emptyDuplicateLayer(layer) {
 
-            var p = n_prop.property(innerProp.matchName) ? n_prop.property(innerProp.matchName) : n_prop.addProperty(innerProp.matchName);
+    var new_layer = layer.containingComp.layers.addShape();
 
-            switch (innerProp.matchName) {
+    copyProperty('anchorPoint', layer, new_layer);
+    copyProperty('position', layer, new_layer);
+    copyProperty('scale', layer, new_layer);
+    copyProperty('rotation', layer, new_layer);
+    copyProperty('opacity', layer, new_layer);
 
-                case 'ADBE Vector Filter - Merge':
-                copyProperty('mode', innerProp, p)
-                break;
+    return new_layer;
 
-                case 'ADBE Vector Materials Group':
-                consLog(prefix + '-- skipped');
-                break;
+}
 
-                case 'ADBE Vector Graphic - Stroke':
-                copyPropertyStroke(innerProp, p);
-                break;
+function copyProperties(origin, target, prefix) {
 
-                case 'ADBE Vector Graphic - Fill':
-                copyPropertyFill(innerProp, p);
-                break;
+    for(var i=1; i <= origin.numProperties; i++) {
 
-                case 'ADBE Vector Transform Group':
-                copyPropertyTransform(innerProp, p);
-                break;
+        var _prop = origin.property(i);
 
-                case 'ADBE Vector Shape - Rect':
-                copyPropertyRect(innerProp, p);
-                break;
+        if(!_prop.enabled || !target.canAddProperty(_prop.matchName)) return;
 
-                case 'ADBE Vector Shape - Ellipse':
-                copyPropertyEllipse(innerProp, p);
-                break;
+        consLog(prefix + _prop.matchName);
 
-                case 'ADBE Vector Shape - Star':
-                copyPropertyStar(innerProp, p);
-                break;
+        var prop = target.addProperty(_prop.matchName);
 
-                case 'ADBE Root Vectors Group':
-                case 'ADBE Vectors Group':
-                case 'ADBE Vector Group':
-                insertPropertyToContents(innerProp, n_prop, prefix += '    ')
-                break;
+        switch (_prop.matchName) {
 
-                case 'ADBE Vector Shape - Group':
-                copyPropertyShape(innerProp, p);
-                break;
+            case 'ADBE Vector Filter - Merge':
+            copyProperty('mode', _prop, prop)
+            break;
 
-                default:
-                p.setValue( innerProp.value );
+            case 'ADBE Vector Materials Group':
+            consLog(prefix + '-- skipped');
+            break;
 
+            case 'ADBE Vector Graphic - Stroke':
+            copyPropertyStroke(_prop, prop);
+            break;
 
+            case 'ADBE Vector Graphic - Fill':
+            copyPropertyFill(_prop, prop);
+            break;
 
-            }
+            case 'ADBE Vector Transform Group':
+            copyPropertyTransform(_prop, prop);
+            break;
+
+            case 'ADBE Vector Shape - Rect':
+            copyPropertyRect(_prop, prop);
+            break;
+
+            case 'ADBE Vector Shape - Ellipse':
+            copyPropertyEllipse(_prop, prop);
+            break;
+
+            case 'ADBE Vector Shape - Star':
+            copyPropertyStar(_prop, prop);
+            break;
+
+            case 'ADBE Root Vectors Group':
+            case 'ADBE Vectors Group':
+            case 'ADBE Vector Group':
+            copyProperties(_prop, prop, prefix += '    ')
+            break;
+
+            case 'ADBE Vector Shape - Group':
+            copyPropertyShape(_prop, prop);
+            break;
+
+            case 'ADBE Vector Blend Mode':
+            prop.setValue( _prop.value );
+            break;
 
         }
 
     }
-
 
 }
 
@@ -177,18 +191,18 @@ function copyPropertyStroke(origin, target) {
     copyProperty('miterLimit', origin, target);
 
     // TOFIX : dash are present, no mater if deleted or not ! (disabled for now)
-    if(false && origin.dash.enabled) {
-
-        for(var i=1; i <= origin.dash.numProperties; i++) {
-
-            var dashProp = origin.dash.property(i);
-
-            if(dashProp.enabled)
-                target.dash.addProperty(dashProp.matchName).setValue(dashProp.value);
-
-        }
-
-    }
+    // if(false && origin.dash.enabled) {
+    //
+    //     for(var i=1; i <= origin.dash.numProperties; i++) {
+    //
+    //         var dashProp = origin.dash.property(i);
+    //
+    //         if(dashProp.enabled)
+    //             target.dash.addProperty(dashProp.matchName).setValue(dashProp.value);
+    //
+    //     }
+    //
+    // }
 
 }
 
@@ -207,16 +221,6 @@ function copyPropertyTransform(origin, target) {
     copyProperty('scale', origin, target);
     copyProperty('skew', origin, target);
     copyProperty('skewAxis', origin, target);
-    copyProperty('rotation', origin, target);
-    copyProperty('opacity', origin, target);
-
-}
-
-function copyLayerTransform(origin, target) {
-
-    copyProperty('anchorPoint', origin, target);
-    copyProperty('position', origin, target);
-    copyProperty('scale', origin, target);
     copyProperty('rotation', origin, target);
     copyProperty('opacity', origin, target);
 
@@ -247,40 +251,41 @@ function copyPropertyStar(origin, target) {
     copyProperty('outerRoundness', origin, target)
 }
 
-function createUI(thisObj) {
+function createUI(that) {
 
-    if(thisObj instanceof Panel) {
+    if(that instanceof Panel) {
 
-        var myPanel = thisObj;
+        var myPanel = that;
 
     } else {
 
-        var myPanel = new Window('palette', configs.title, undefined, {
+        var _panel = new Window('palette', configs.title, undefined, {
             resizeable : true,
         });
-        myPanel.show();
+        _panel.show();
 
     }
 
-    var btn = myPanel.add("button", [10, 10, 100, 30], "Explode layer");
+    var btn = _panel.add("button", [10, 10, 100, 30], "Explode layer");
 
-    myPanel.text = configs.title;
-    myPanel.bounds.width = 120;
-    myPanel.bounds.height = 40;
+    _panel.text = configs.title;
+    _panel.bounds.width = 120;
+    _panel.bounds.height = 40;
 
     btn.onClick = function() {
 
-        var t_start = new Date().getTime();
+        var startTime = new Date().getTime();
 
-        explodeLayer( app.project.activeItem.selectedLayers );
+        explode();
 
-        var t_end = new Date().getTime();
-        consLog('Execution time : ' + (t_end - t_start) + 'ms');
+        var execTime = new Date().getTime() - startTime;
+
+        consLog('Execution time : ' + Math.floor(execTime / 1000) + 's ' + (execTime % 1000) + 'ms');
 
     }
 
-    return myPanel;
+    return _panel;
 
 }
 
-var myToolsPanel = createUI(this);
+var _panel = createUI(this);
