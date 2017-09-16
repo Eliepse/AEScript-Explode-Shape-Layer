@@ -66,10 +66,11 @@ function insertPropertyToContents(prop, contents, prefix) {
 
             switch (innerProp.matchName) {
 
-                // case 'ADBE Vector Blend Mode':
+                case 'ADBE Vector Filter - Merge':
+                copyProperty('mode', innerProp, p)
+                break;
 
-                case 'ADBE Vector Filter - Merge':  // TODO
-                case 'ADBE Vector Materials Group': // TODO
+                case 'ADBE Vector Materials Group':
                 consLog(prefix + '-- skipped');
                 break;
 
@@ -96,7 +97,6 @@ function insertPropertyToContents(prop, contents, prefix) {
                 break;
 
                 default:
-                // TOFIX : Test if setValue is available
                 p.setValue( innerProp.value );
 
 
