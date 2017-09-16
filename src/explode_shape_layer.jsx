@@ -21,6 +21,7 @@
 
     // Get the elements of the original shape layer
     var contents = layer.property("Contents");
+    var n_layers = [];
 
     // Browse through contents array
     for(var i = contents.numProperties; i > 0; i--) {
@@ -34,6 +35,10 @@
             // Duplicate the original layer and rename with property name
             var n_layer = comp.layers.addShape();
             n_layer.name = o_prop.name;
+            n_layer.enabled = false;
+
+            n_layers.push(n_layer);
+
             copyLayerTransform(layer, n_layer);
 
             // Get the elements of the new layer
@@ -43,6 +48,10 @@
 
         }
 
+    }
+
+    for(var i = 0; i < n_layers.length; i++) {
+        n_layers[i].enabled = true;
     }
 
 }
@@ -195,7 +204,14 @@ function createUI(thisObj) {
     myPanel.bounds.height = 40;
 
     btn.onClick = function() {
+
+        var t_start = new Date().getTime();
+
         explodeLayer( app.project.activeItem.selectedLayers );
+
+        var t_end = new Date().getTime();
+        consLog('Execution time : ' + (t_end - t_start) + 'ms');
+
     }
 
     return myPanel;
@@ -206,7 +222,7 @@ function consLog(text) { if (configs.log) $.writeln(text); }
 
 var configs = {
     title: 'Explode layer tool',
-    log : false,
+    log : true,
 };
 
 var myToolsPanel = createUI(this);
