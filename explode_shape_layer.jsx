@@ -178,25 +178,34 @@ function createUI(thisObj) {
     if(thisObj instanceof Panel) {
 
         var myPanel = thisObj;
-        var btn = myPanel.add("button", [10, 10, 100, 30], "Explode layer");
-
-        btn.onClick = function() {
-            explodeLayer( app.project.activeItem.selectedLayers );
-        }
-
-        return myPanel;
 
     } else {
 
-        explodeLayer( app.project.activeItem.selectedLayers );
+        var myPanel = new Window('palette', configs.title, undefined, {
+            resizeable : true,
+        });
+        myPanel.show();
 
     }
+
+    var btn = myPanel.add("button", [10, 10, 100, 30], "Explode layer");
+
+    myPanel.text = configs.title;
+    myPanel.bounds.width = 120;
+    myPanel.bounds.height = 40;
+
+    btn.onClick = function() {
+        explodeLayer( app.project.activeItem.selectedLayers );
+    }
+
+    return myPanel;
 
 }
 
 function consLog(text) { if (configs.log) $.writeln(text); }
 
 var configs = {
+    title: 'Explode layer tool',
     log : false,
 };
 
