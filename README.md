@@ -2,10 +2,6 @@
 
 __Explode Shape Layer__ is an After Effects Script that allow you to extract shapes from a _shape layer_ to individual layers.
 
-### Warning
-The script still in a __development stage.__ It is __unstable !__
-
-
 ## How to use it ?
 
 The usageis very simple:
