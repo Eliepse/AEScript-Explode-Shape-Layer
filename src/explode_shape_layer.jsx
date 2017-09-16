@@ -23,6 +23,10 @@
     var contents = layer.property("Contents");
     var n_layers = [];
 
+    if(contents.numProperties > configs.itemAmountWarning && !confirm('You have more than ' + configs.itemAmountWarning + ' elements. Execution time might be long, are you sure you want to continue ?'))
+        return;
+
+
     // Browse through contents array
     for(var i = contents.numProperties; i > 0; i--) {
 
@@ -222,7 +226,8 @@ function consLog(text) { if (configs.log) $.writeln(text); }
 
 var configs = {
     title: 'Explode layer tool',
-    log : true,
+    log : false,
+    itemAmountWarning : 50,
 };
 
 var myToolsPanel = createUI(this);
