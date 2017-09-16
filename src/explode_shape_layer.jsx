@@ -101,6 +101,18 @@ function insertPropertyToContents(prop, contents, prefix) {
                 copyPropertyTransform(innerProp, p);
                 break;
 
+                case 'ADBE Vector Shape - Rect':
+                copyPropertyRect(innerProp, p);
+                break;
+
+                case 'ADBE Vector Shape - Ellipse':
+                copyPropertyEllipse(innerProp, p);
+                break;
+
+                case 'ADBE Vector Shape - Star':
+                copyPropertyStar(innerProp, p);
+                break;
+
                 case 'ADBE Root Vectors Group':
                 case 'ADBE Vectors Group':
                 case 'ADBE Vector Group':
@@ -188,6 +200,31 @@ function copyLayerTransform(origin, target) {
 
 }
 
+function copyPropertyRect(origin, target) {
+    copyProperty('shapeDirection', origin, target)
+    copyProperty('size', origin, target)
+    copyProperty('position', origin, target)
+    copyProperty('roundness', origin, target)
+}
+
+function copyPropertyEllipse(origin, target) {
+    copyProperty('shapeDirection', origin, target)
+    copyProperty('size', origin, target)
+    copyProperty('position', origin, target)
+}
+
+function copyPropertyStar(origin, target) {
+    copyProperty('shapeDirection', origin, target)
+    copyProperty('type', origin, target)
+    copyProperty('points', origin, target)
+    copyProperty('position', origin, target)
+    copyProperty('rotation', origin, target)
+    copyProperty('innerRadius', origin, target)
+    copyProperty('outerRadius', origin, target)
+    copyProperty('innerRoundness', origin, target)
+    copyProperty('outerRoundness', origin, target)
+}
+
 function createUI(thisObj) {
 
     if(thisObj instanceof Panel) {
@@ -226,7 +263,7 @@ function createUI(thisObj) {
 
 var configs = {
     title: 'Explode layer tool',
-    log : false,
+    log : true,
     itemAmountWarning : 50,
 };
 
