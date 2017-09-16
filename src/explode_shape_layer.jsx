@@ -1,4 +1,7 @@
-/* @requires utils.jsx  */
+/*
+ * @requires utils.jsx
+ * @requires progressBar.jsx
+*/
 
 function explodeLayer(layer) {
 
@@ -19,12 +22,15 @@ function explodeLayer(layer) {
 
     }
 
+    _progressBar.make(1, contents.numProperties, 1);
+    _progressBar.showBar();
 
     // Browse through contents array
     for(var i = contents.numProperties; i > 0; i--) {
 
         // Get the original property
         var _prop = contents.property(i);
+        _progressBar.setCurrent(contents.numProperties - i)
 
         // Skip the property if not enabled
         if (!_prop.enabled) continue;
@@ -44,6 +50,8 @@ function explodeLayer(layer) {
         copyProperties(_prop, prop, '')
 
     }
+
+    _progressBar.hideBar();
 
     for(var i = 0; i < layers.length; i++) {
         layers[i].enabled = true;
