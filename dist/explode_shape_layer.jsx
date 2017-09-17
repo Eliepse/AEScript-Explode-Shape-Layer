@@ -1,11 +1,18 @@
 var configs = {
     title: 'Explode layer tool',
+    debug : false,
     log : true,
     itemAmountWarning : 50,
+    dryRun : false,
 };
 
-function consLog(text) {
+function cLog(text) {
     if (configs.log)
+        $.writeln(text);
+}
+
+function cDebug(text) {
+    if (configs.debug)
         $.writeln(text);
 }
 
@@ -20,48 +27,112 @@ function listMatchNames(object) {
 
 }
 
-_progressBar = new Window('palette', configs.title, undefined, {
-    resizeable : false,
-    borderless : 'not quite true',
-});
+function ExecutionTime() {
 
-_progressBar.preferredSize = [420, 40];
-_progressBar.bar = _progressBar.add("progressbar", undefined, 0, 100);
-_progressBar.bar.value = 0;
-_progressBar.bar.preferredSize.width = 400;
-_progressBar.bar.show()
+    var startTime;
+    var endTime;
+    var execTime;
 
-_progressBar.barInfos = _progressBar.add("statictext", undefined, 'Loading, please wait', {
-    justify: 'center'
-});
-_progressBar.barInfos.preferredSize = [400, 17];
+    this.constructor = function () {}
 
-_progressBar.make = function (min, max, current) {
-    this.barProps = {
-        min : min,
-        max : max,
-        current : current,
+    this.start = function () {
+        startTime = new Date().getTime();
     }
-    this.barProps.total = (this.barProps.max - this.barProps.min) + 1;
-    this.barProps.step = (this.barProps.current - this.barProps.min) + 1;
+
+    this.stop = function () {
+        endTime = new Date().getTime()
+        execTime = endTime - startTime;
+    }
+
+    this.time = function () {
+        return 'Execution time : ' + Math.floor(execTime / 1000) + 's ' + (execTime % 1000) + 'ms';
+    }
+
 }
 
-_progressBar.updateBar = function () {
-    this.bar.value = Math.round(( (this.barProps.step) * 100) / this.barProps.max)
-    consLog('Processing element ' + (this.barProps.step + 1) + ' on ' + this.barProps.total);
-    this.barInfos.text = 'Processing element ' + (this.barProps.step + 1) + ' on ' + this.barProps.total;
+function ProgressBar(min, max, current) {
+
+    var _window,
+        _progressBar,
+        _infos,
+        _real,
+        _cursor,
+        _isVisible;
+
+    this.testInfos = 'Processing element :current on :max';
+
+    this.constructor = function(min, max, current) {
+
+        _this = this;
+        _isVisible = false;
+
+        _real = { min : min, max : max, current : current };
+        _cursor = { min : 0, max : 100, current : 0 };
+
+        _cursor.max = (_real.max - _real.min) + 1;
+
+        // Instanciate the window
+        _window = new Window('palette', configs.title, undefined, {
+            resizeable : false,
+            borderless : 'not quite true',
+        });
+        _window.preferredSize = [420, 40];
+
+        // Instanciate the progress bar
+        _progressBar = _window.add("progressbar", undefined, _cursor.min, _cursor.max);
+        _progressBar.preferredSize.width = 400;
+        _progressBar.show();
+
+        // Instanciate text infos
+        _infos = _window.add("statictext", undefined, 'Loading, please wait', {
+            justify: 'center'
+        });
+        _infos.preferredSize = [400, 17];
+
+        this.update(current);
+
+
+        return this;
+
+    }
+
+    this.start = function () {
+        _isVisible = true;
+        this.update(_real.current)
+        _window.show();
+    }
+
+    this.end = function () {
+        _window.hide();
+    }
+
+    this.update = function(step) {
+
+        _real.current = step;
+        _cursor.current = (_real.current + 1) - _real.min;
+
+        var infos = this.testInfos
+        .replace(':current', _cursor.current)
+        .replace(':max', _cursor.max);
+
+        _progressBar.value = _cursor.current;
+        _infos.text = infos;
+
+        cDebug(infos);
+
+        updateGraphics();
+    }
+
+    function updateGraphics() {
+        if(!_isVisible) return;
+        _window.update();
+    }
+
+    return this.constructor(min, max, current);
+
 }
 
-_progressBar.showBar = function () { this.show(); }
-
-_progressBar.hideBar = function  () { this.hide(); }
-
-_progressBar.setCurrent = function  (current, text) {
-    this.barProps.current = current;
-    this.barProps.step = (this.barProps.current - this.barProps.min) + 1;
-    this.updateBar();
-    this.update();
-}
+// this.bar.value = Math.round(( (this.barProps.step) * 100) / this.barProps.max)
 
 /*
  * @requires utils.jsx
@@ -70,7 +141,7 @@ _progressBar.setCurrent = function  (current, text) {
 
 function explodeLayer(layer) {
 
-    consLog('==============\n==============');
+    cLog('Exploding layer : ' + layer.name);
 
     // Get the elements of the original shape layer
     var contents = layer.property("Contents");
@@ -87,15 +158,15 @@ function explodeLayer(layer) {
 
     }
 
-    _progressBar.make(1, contents.numProperties, 1);
-    _progressBar.showBar();
+    var pb = new ProgressBar(1, contents.numProperties, 1);
+    pb.start();
 
     // Browse through contents array
     for(var i = contents.numProperties; i > 0; i--) {
 
         // Get the original property
         var _prop = contents.property(i);
-        _progressBar.setCurrent(contents.numProperties - i)
+        pb.update(contents.numProperties - i)
 
         // Skip the property if not enabled
         if (!_prop.enabled) continue;
@@ -105,6 +176,7 @@ function explodeLayer(layer) {
 
         new_layer.name = layer.name + ' - ' + _prop.name;
         new_layer.enabled = false;
+        new_layer.shy = true;
 
         layers.push(new_layer);
 
@@ -116,11 +188,15 @@ function explodeLayer(layer) {
 
     }
 
-    _progressBar.hideBar();
+    pb.end();
 
     for(var i = 0; i < layers.length; i++) {
         layers[i].enabled = true;
+        layers[i].shy = false;
+        if(configs.dryRun) layers[i].remove();
     }
+
+    return layers;
 
 }
 
@@ -140,7 +216,29 @@ function explode() {
         return;
     }
 
-    explodeLayer(selectedLayer);
+    cLog('==================')
+
+    cLog('Configs :')
+    for(config in configs) {
+        if(configs.hasOwnProperty(config))
+            cLog('    ' + config + ' : ' + configs[config])
+    }
+
+    cLog('')
+
+    var execTime = new ExecutionTime();
+    execTime.start();
+
+    var hideShyLayers_originalState = selectedLayer.containingComp.hideShyLayers;
+    selectedLayer.containingComp.hideShyLayers = true;
+
+    var layers = explodeLayer(selectedLayer);
+
+    selectedLayer.moveToBeginning()
+    selectedLayer.containingComp.hideShyLayers = hideShyLayers_originalState;
+
+    execTime.stop();
+    cLog(execTime.time());
 
 }
 
@@ -166,7 +264,7 @@ function copyProperties(origin, target, prefix) {
 
         if(!_prop.enabled || !target.canAddProperty(_prop.matchName)) return;
 
-        consLog(prefix + _prop.matchName);
+        cDebug(prefix + _prop.matchName);
 
         var prop = target.addProperty(_prop.matchName);
 
@@ -177,7 +275,7 @@ function copyProperties(origin, target, prefix) {
             break;
 
             case 'ADBE Vector Materials Group':
-            consLog(prefix + '-- skipped');
+            cDebug(prefix + '-- skipped');
             break;
 
             case 'ADBE Vector Graphic - Stroke':
@@ -306,7 +404,7 @@ function createUI(that) {
 
     if(that instanceof Panel) {
 
-        var myPanel = that;
+        var _panel = that;
 
     } else {
 
@@ -319,19 +417,13 @@ function createUI(that) {
 
     var btn = _panel.add("button", [10, 10, 100, 30], "Explode layer");
 
-    _panel.text = configs.title;
+    // _panel.text = configs.title;
     _panel.bounds.width = 120;
     _panel.bounds.height = 40;
 
     btn.onClick = function() {
 
-        var startTime = new Date().getTime();
-
         explode();
-
-        var execTime = new Date().getTime() - startTime;
-
-        consLog('Execution time : ' + Math.floor(execTime / 1000) + 's ' + (execTime % 1000) + 'ms');
 
     }
 
