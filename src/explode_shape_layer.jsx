@@ -77,6 +77,8 @@ function explode() {
         return;
     }
 
+    var execTime = new ExecutionTime();
+    execTime.start();
 
     var hideShyLayers_originalState = selectedLayer.containingComp.hideShyLayers;
     selectedLayer.containingComp.hideShyLayers = true;
@@ -85,6 +87,9 @@ function explode() {
 
     selectedLayer.moveToBeginning()
     selectedLayer.containingComp.hideShyLayers = hideShyLayers_originalState;
+
+    execTime.stop();
+    cLog(execTime.time());
 
 }
 
