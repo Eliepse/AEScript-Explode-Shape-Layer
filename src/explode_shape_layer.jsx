@@ -5,7 +5,7 @@
 
 function explodeLayer(layer) {
 
-    consLog('==============\n==============');
+    cLog('Exploding layer : ' + layer.name + '\n==================');
 
     // Get the elements of the original shape layer
     var contents = layer.property("Contents");
@@ -101,7 +101,7 @@ function copyProperties(origin, target, prefix) {
 
         if(!_prop.enabled || !target.canAddProperty(_prop.matchName)) return;
 
-        consLog(prefix + _prop.matchName);
+        cDebug(prefix + _prop.matchName);
 
         var prop = target.addProperty(_prop.matchName);
 
@@ -112,7 +112,7 @@ function copyProperties(origin, target, prefix) {
             break;
 
             case 'ADBE Vector Materials Group':
-            consLog(prefix + '-- skipped');
+            cDebug(prefix + '-- skipped');
             break;
 
             case 'ADBE Vector Graphic - Stroke':
@@ -260,13 +260,7 @@ function createUI(that) {
 
     btn.onClick = function() {
 
-        var startTime = new Date().getTime();
-
         explode();
-
-        var execTime = new Date().getTime() - startTime;
-
-        consLog('Execution time : ' + Math.floor(execTime / 1000) + 's ' + (execTime % 1000) + 'ms');
 
     }
 

@@ -1,5 +1,10 @@
-function consLog(text) {
+function cLog(text) {
     if (configs.log)
+        $.writeln(text);
+}
+
+function cDebug(text) {
+    if (configs.debug)
         $.writeln(text);
 }
 
