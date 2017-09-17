@@ -5,7 +5,7 @@
 
 function explodeLayer(layer) {
 
-    cLog('==================\n' + 'Exploding layer : ' + layer.name);
+    cLog('Exploding layer : ' + layer.name);
 
     // Get the elements of the original shape layer
     var contents = layer.property("Contents");
@@ -57,6 +57,7 @@ function explodeLayer(layer) {
     for(var i = 0; i < layers.length; i++) {
         layers[i].enabled = true;
         layers[i].shy = false;
+        if(configs.dryRun) layers[i].remove();
     }
 
     return layers;
@@ -79,6 +80,16 @@ function explode() {
         return;
     }
 
+    cLog('==================')
+
+    cLog('Configs :')
+    for(config in configs) {
+        if(configs.hasOwnProperty(config))
+            cLog('    ' + config + ' : ' + configs[config])
+    }
+
+    cLog('')
+
     var execTime = new ExecutionTime();
     execTime.start();
 
@@ -86,16 +97,6 @@ function explode() {
     selectedLayer.containingComp.hideShyLayers = true;
 
     var layers = explodeLayer(selectedLayer);
-
-    if(configs.dryRun) {
-
-        cLog('Removing generated layers');
-
-        for(var i = 0; i < layers.length; i++) {
-            layers[i].remove();
-        }
-
-    }
 
     selectedLayer.moveToBeginning()
     selectedLayer.containingComp.hideShyLayers = hideShyLayers_originalState;
