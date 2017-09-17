@@ -40,6 +40,7 @@ function explodeLayer(layer) {
 
         new_layer.name = layer.name + ' - ' + _prop.name;
         new_layer.enabled = false;
+        new_layer.shy = true;
 
         layers.push(new_layer);
 
@@ -55,6 +56,7 @@ function explodeLayer(layer) {
 
     for(var i = 0; i < layers.length; i++) {
         layers[i].enabled = true;
+        layers[i].shy = false;
     }
 
 }
@@ -75,7 +77,14 @@ function explode() {
         return;
     }
 
+
+    var hideShyLayers_originalState = selectedLayer.containingComp.hideShyLayers;
+    selectedLayer.containingComp.hideShyLayers = true;
+
     explodeLayer(selectedLayer);
+
+    selectedLayer.moveToBeginning()
+    selectedLayer.containingComp.hideShyLayers = hideShyLayers_originalState;
 
 }
 
