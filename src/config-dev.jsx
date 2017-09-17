@@ -3,4 +3,5 @@ var configs = {
     debug : false,
     log : true,
     itemAmountWarning : 50,
+    dryRun : true,
 };

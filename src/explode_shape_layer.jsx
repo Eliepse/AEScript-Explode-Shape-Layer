@@ -59,6 +59,8 @@ function explodeLayer(layer) {
         layers[i].shy = false;
     }
 
+    return layers;
+
 }
 
 function explode() {
@@ -83,7 +85,17 @@ function explode() {
     var hideShyLayers_originalState = selectedLayer.containingComp.hideShyLayers;
     selectedLayer.containingComp.hideShyLayers = true;
 
-    explodeLayer(selectedLayer);
+    var layers = explodeLayer(selectedLayer);
+
+    if(configs.dryRun) {
+
+        cLog('Removing generated layers');
+
+        for(var i = 0; i < layers.length; i++) {
+            layers[i].remove();
+        }
+
+    }
 
     selectedLayer.moveToBeginning()
     selectedLayer.containingComp.hideShyLayers = hideShyLayers_originalState;
