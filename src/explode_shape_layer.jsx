@@ -255,7 +255,7 @@ function createUI(that) {
 
     if(that instanceof Panel) {
 
-        var myPanel = that;
+        var _panel = that;
 
     } else {
 
@@ -268,7 +268,7 @@ function createUI(that) {
 
     var btn = _panel.add("button", [10, 10, 100, 30], "Explode layer");
 
-    _panel.text = configs.title;
+    // _panel.text = configs.title;
     _panel.bounds.width = 120;
     _panel.bounds.height = 40;
 
