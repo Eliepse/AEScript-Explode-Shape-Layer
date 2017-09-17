@@ -5,7 +5,7 @@
 
 function explodeLayer(layer) {
 
-    cLog('Exploding layer : ' + layer.name + '\n==================');
+    cLog('==================\n' + 'Exploding layer : ' + layer.name);
 
     // Get the elements of the original shape layer
     var contents = layer.property("Contents");
@@ -22,15 +22,15 @@ function explodeLayer(layer) {
 
     }
 
-    _progressBar.make(1, contents.numProperties, 1);
-    _progressBar.showBar();
+    var pb = new ProgressBar(1, contents.numProperties, 1);
+    pb.start();
 
     // Browse through contents array
     for(var i = contents.numProperties; i > 0; i--) {
 
         // Get the original property
         var _prop = contents.property(i);
-        _progressBar.setCurrent(contents.numProperties - i)
+        pb.update(contents.numProperties - i)
 
         // Skip the property if not enabled
         if (!_prop.enabled) continue;
@@ -52,7 +52,7 @@ function explodeLayer(layer) {
 
     }
 
-    _progressBar.hideBar();
+    pb.end();
 
     for(var i = 0; i < layers.length; i++) {
         layers[i].enabled = true;
