@@ -1,5 +1,7 @@
 # [After Effects Script] Explode Shape layer
 
+[![GitHub release](https://img.shields.io/github/release/Eliepse/AEScript-Explode-Shape-Layer.svg)](https://github.com/Eliepse/AEScript-Explode-Shape-Layer/releases/latest) [![license](https://img.shields.io/github/license/Eliepse/AEScript-Explode-Shape-Layer.svg)](https://github.com/Eliepse/AEScript-Explode-Shape-Layer/blob/master/LICENSE) [![Software](https://img.shields.io/badge/plugin-Adobe%20After%20Effect-blue.svg)](https://www.adobe.com/fr/products/aftereffects.html)
+
 __Explode Shape Layer__ is an After Effects Script that allow you to extract shapes from a _shape layer_ to individual layers.
 
 To get the script, click the link : [Download the script](https://github.com/Eliepse/AfterEffectsScript-Explode-Shape-Layer/releases/latest)
