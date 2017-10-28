@@ -1,0 +1,34 @@
+{
+  "name": "aescript-explode-shape-layer",
+  "version": "1.1.1",
+  "description": "Extract shapes from a shape layer to individual layers",
+  "main": "gulpfile.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Eliepse/AEScript-Explode-Shape-Layer.git"
+  },
+  "keywords": [
+    "after-effects",
+    "script",
+    "explode",
+    "shape-layer",
+    "extract-shapes"
+  ],
+  "author": "Eliepse <contact@eliepse.fr>",
+  "license": "Unlicense",
+  "bugs": {
+    "url": "https://github.com/Eliepse/AEScript-Explode-Shape-Layer/issues"
+  },
+  "homepage": "https://github.com/Eliepse/AEScript-Explode-Shape-Layer#readme",
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-concat": "^2.6.1",
+    "gulp-rename": "^1.2.2",
+    "gulp-resolve-dependencies": "^2.2.0",
+    "gulp-uglify": "^3.0.0",
+    "pump": "^1.0.2"
+  }
+}
