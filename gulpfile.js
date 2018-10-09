@@ -39,7 +39,7 @@ gulp.task('prod', function (cb) {
 
 });
 
-gulp.task('watch', ['dev'], function () {
+gulp.task('watch', function () {
 
     gulp.watch('src/*', ['dev']);
 
