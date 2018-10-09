@@ -4,7 +4,9 @@
   "description": "Extract shapes from a shape layer to individual layers",
   "main": "gulpfile.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "gulp dev",
+    "prod": "gulp prod",
+    "watch": "gulp watch"
   },
   "repository": {
     "type": "git",
