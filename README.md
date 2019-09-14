@@ -28,6 +28,7 @@ Then, activate the script in AE menu : `window -> explode_shape_layer`
 You can directly launch the script using AE menu: `File -> Scripts -> Run Script File`
 
 ## Compatibility
-Works on :
+Tested on :
+- After Effects __CC 2019__ (version 16.1.2)
+- After Effects __CC 2018__
 - After Effects __CC 2017__
-- Not tested on previous versions
