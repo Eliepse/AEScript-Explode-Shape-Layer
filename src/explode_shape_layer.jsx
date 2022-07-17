@@ -25,32 +25,38 @@ function explodeLayer(layer) {
     var pb = new ProgressBar(1, contents.numProperties, 1);
     pb.start();
 
-    // Browse through contents array
-    for(var i = contents.numProperties; i > 0; i--) {
+    try {
+        // Browse through contents array
+        for(var i = contents.numProperties; i > 0; i--) {
 
-        // Get the original property
-        var _prop = contents.property(i);
-        pb.update(contents.numProperties - i)
+            // Get the original property
+            var _prop = contents.property(i);
+            pb.update(contents.numProperties - i)
 
-        // Skip the property if not enabled
-        if (!_prop.enabled) continue;
+            // Skip the property if not enabled
+            if (!_prop.enabled) continue;
 
-        // Duplicate the original layer and rename with property name
-        var new_layer = emptyDuplicateLayer(layer)
+            // Duplicate the original layer and rename with property name
+            var new_layer = emptyDuplicateLayer(layer)
 
-        new_layer.name = layer.name + ' - ' + _prop.name;
-        new_layer.enabled = false;
-        new_layer.shy = true;
+            new_layer.name = layer.name + ' - ' + _prop.name;
+            new_layer.enabled = false;
+            new_layer.shy = true;
 
-        layers.push(new_layer);
+            layers.push(new_layer);
 
-        if (!new_layer.property("Contents").canAddProperty(_prop.matchName)) continue;
+            if (!new_layer.property("Contents").canAddProperty(_prop.matchName)) continue;
 
-        var prop = new_layer.property("Contents").addProperty(_prop.matchName)
+            var prop = new_layer.property("Contents").addProperty(_prop.matchName)
 
-        copyProperties(_prop, prop, '')
+            copyProperties(_prop, prop, 0)
 
+        }
+    } catch(e) {
+        cLog("An error occured: " + e.message);
+        pb.end();
     }
+
 
     pb.end();
 
@@ -120,13 +126,30 @@ function emptyDuplicateLayer(layer) {
 
 }
 
-function copyProperties(origin, target, prefix) {
+/**
+ * Copy properties of a layer to another (recursive).
+ * 
+ * @param {Object} origin 
+ * @param {Object} target 
+ * @param {Number} level 
+ */
+function copyProperties(origin, target, level) {
+    var indent = repeatStr("  ", level === undefined ? 0 : level);
+    var prefix = indent + "⌞-";
+
+    cDebug(indent + origin.name);
 
     for(var i=1; i <= origin.numProperties; i++) {
 
         var _prop = origin.property(i);
 
         if(!_prop.enabled || !target.canAddProperty(_prop.matchName)) return;
+
+        // Skipped properties
+        if(arrayIncludes(['ADBE Vector Materials Group'], _prop.matchName)) {
+            cDebug(prefix + _prop.matchName + " (skipped)");
+            continue;
+        }
 
         cDebug(prefix + _prop.matchName);
 
@@ -138,48 +161,82 @@ function copyProperties(origin, target, prefix) {
             copyProperty('mode', _prop, prop)
             break;
 
-            case 'ADBE Vector Materials Group':
-            cDebug(prefix + '-- skipped');
-            break;
-
             case 'ADBE Vector Graphic - Stroke':
-            copyPropertyStroke(_prop, prop);
+            copyProperty('composite', _prop, prop);
+            copyProperty('color', _prop, prop);
+            copyProperty('strokeWidth', _prop, prop);
+            copyProperty('lineCap', _prop, prop);
+            copyProperty('lineJoin', _prop, prop);
+            copyProperty('miterLimit', _prop, prop);
             break;
 
             case 'ADBE Vector Graphic - Fill':
-            copyPropertyFill(_prop, prop);
+            copyProperty('composite', _prop, prop);
+            copyProperty('fillRule', _prop, prop);
+            copyProperty('color', _prop, prop);
             break;
 
             case 'ADBE Vector Transform Group':
-            copyPropertyTransform(_prop, prop);
+            copyProperty('anchorPoint', _prop, prop);
+            copyProperty('position', _prop, prop);
+            copyProperty('scale', _prop, prop);
+            copyProperty('skew', _prop, prop);
+            copyProperty('skewAxis', _prop, prop);
+            copyProperty('rotation', _prop, prop);
+            copyProperty('opacity', _prop, prop);
             break;
 
             case 'ADBE Vector Shape - Rect':
-            copyPropertyRect(_prop, prop);
+            copyProperty('shapeDirection', _prop, prop)
+            copyProperty('size', _prop, prop)
+            copyProperty('position', _prop, prop)
+            copyProperty('roundness', _prop, prop)
             break;
 
             case 'ADBE Vector Shape - Ellipse':
-            copyPropertyEllipse(_prop, prop);
+            copyProperty('shapeDirection', _prop, prop)
+            copyProperty('size', _prop, prop)
+            copyProperty('position', _prop, prop)
             break;
 
             case 'ADBE Vector Shape - Star':
-            copyPropertyStar(_prop, prop);
+            copyProperty('shapeDirection', _prop, prop)
+            copyProperty('type', _prop, prop)
+            copyProperty('points', _prop, prop)
+            copyProperty('position', _prop, prop)
+            copyProperty('rotation', _prop, prop)
+            copyProperty('innerRadius', _prop, prop)
+            copyProperty('outerRadius', _prop, prop)
+            copyProperty('innerRoundness', _prop, prop)
+            copyProperty('outerRoundness', _prop, prop)
             break;
 
             case 'ADBE Root Vectors Group':
             case 'ADBE Vectors Group':
             case 'ADBE Vector Group':
-            copyProperties(_prop, prop, prefix += '    ')
+            copyProperties(_prop, prop, level + 1);
             break;
 
             case 'ADBE Vector Shape - Group':
-            copyPropertyShape(_prop, prop);
+            prop.property('ADBE Vector Shape').setValue( _prop.property('ADBE Vector Shape').value );
             break;
+
+            // case 'Vector Stroke Taper':
+            // copyProperty('startLength', _prop, prop);
+            // copyProperty('endLength', _prop, prop);
+            // copyProperty('startWidth', _prop, prop);
+            // copyProperty('endWidth', _prop, prop);
+            // copyProperty('startEase', _prop, prop);
+            // copyProperty('endEase', _prop, prop);
+            // break;
 
             case 'ADBE Vector Blend Mode':
             prop.setValue( _prop.value );
             break;
 
+            default:
+            cDebug(prefix + '>> not supported!');
+            break;
         }
 
     }
@@ -190,78 +247,22 @@ function copyProperty(name, origin, target) {
     target[name].setValue( origin[name].value );
 }
 
-function copyPropertyShape(origin, target) {
-    target.property('ADBE Vector Shape').setValue( origin.property('ADBE Vector Shape').value );
+function arrayIncludes(arr, needle) {
+    for(var i=arr.length - 1; i>=0; i--){
+        if(arr[i] === needle) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
-function copyPropertyStroke(origin, target) {
-
-    copyProperty('composite', origin, target);
-    copyProperty('color', origin, target);
-    copyProperty('strokeWidth', origin, target);
-    copyProperty('lineCap', origin, target);
-    copyProperty('lineJoin', origin, target);
-    copyProperty('miterLimit', origin, target);
-
-    // TOFIX : dash are present, no mater if deleted or not ! (disabled for now)
-    // if(false && origin.dash.enabled) {
-    //
-    //     for(var i=1; i <= origin.dash.numProperties; i++) {
-    //
-    //         var dashProp = origin.dash.property(i);
-    //
-    //         if(dashProp.enabled)
-    //             target.dash.addProperty(dashProp.matchName).setValue(dashProp.value);
-    //
-    //     }
-    //
-    // }
-
-}
-
-function copyPropertyFill(origin, target) {
-
-    copyProperty('composite', origin, target);
-    copyProperty('fillRule', origin, target);
-    copyProperty('color', origin, target);
-
-}
-
-function copyPropertyTransform(origin, target) {
-
-    copyProperty('anchorPoint', origin, target);
-    copyProperty('position', origin, target);
-    copyProperty('scale', origin, target);
-    copyProperty('skew', origin, target);
-    copyProperty('skewAxis', origin, target);
-    copyProperty('rotation', origin, target);
-    copyProperty('opacity', origin, target);
-
-}
-
-function copyPropertyRect(origin, target) {
-    copyProperty('shapeDirection', origin, target)
-    copyProperty('size', origin, target)
-    copyProperty('position', origin, target)
-    copyProperty('roundness', origin, target)
-}
-
-function copyPropertyEllipse(origin, target) {
-    copyProperty('shapeDirection', origin, target)
-    copyProperty('size', origin, target)
-    copyProperty('position', origin, target)
-}
-
-function copyPropertyStar(origin, target) {
-    copyProperty('shapeDirection', origin, target)
-    copyProperty('type', origin, target)
-    copyProperty('points', origin, target)
-    copyProperty('position', origin, target)
-    copyProperty('rotation', origin, target)
-    copyProperty('innerRadius', origin, target)
-    copyProperty('outerRadius', origin, target)
-    copyProperty('innerRoundness', origin, target)
-    copyProperty('outerRoundness', origin, target)
+function repeatStr(str, amount) {
+    var rtn = "";
+    for(var i=0; i<amount; i++) {
+        rtn += str;
+    }
+    return rtn;
 }
 
 function createUI(that) {
