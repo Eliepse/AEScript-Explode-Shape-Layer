@@ -1,11 +1,17 @@
 function cLog(text) {
-    if (configs.log)
-        $.writeln(text);
+    if (!configs.log) {
+        return;
+    }
+
+    $.writeln(text);
 }
 
 function cDebug(text) {
-    if (configs.debug)
-        $.writeln(text);
+    if (!configs.debug) {
+        return;
+    }
+
+    $.writeln(text);
 }
 
 function listMatchNames(object) {

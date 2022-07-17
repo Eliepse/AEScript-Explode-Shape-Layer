@@ -6,10 +6,9 @@ var resolveDependencies = require('gulp-resolve-dependencies');
 var concat = require('gulp-concat');
 
 gulp.task('dev', function (cb) {
-
     pump(
         [
-            gulp.src(['src/config.jsx', 'src/explode_shape_layer.jsx']),
+            gulp.src(['src/config.dev.jsx', 'src/explode_shape_layer.jsx']),
             resolveDependencies({ pattern: /\* @requires [\s-]*(.*\.jsx)/g }),
             concat('explode_shape_layer.jsx'),
             gulp.dest('dist/'),
@@ -19,11 +18,9 @@ gulp.task('dev', function (cb) {
         ],
         cb
     );
-
 });
 
 gulp.task('prod', function (cb) {
-
     pump(
         [
             gulp.src(['src/config.jsx', 'src/explode_shape_layer.jsx']),
@@ -36,11 +33,8 @@ gulp.task('prod', function (cb) {
         ],
         cb
     );
-
 });
 
 gulp.task('watch', function () {
-
     gulp.watch('src/*', gulp.series('dev'));
-
 });

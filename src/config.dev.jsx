@@ -1,7 +1,7 @@
 var configs = {
     title: 'Explode layer tool',
-    debug : false,
-    log : false,
+    debug : true,
+    log : true,
     itemAmountWarning : 50,
     dryRun : false,
 };
