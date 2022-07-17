@@ -113,18 +113,25 @@ function explode() {
 }
 
 function emptyDuplicateLayer(layer) {
-
     var new_layer = layer.containingComp.layers.addShape();
 
-    copyProperty('anchorPoint', layer, new_layer);
-    copyProperty('position', layer, new_layer);
-    copyProperty('scale', layer, new_layer);
-    copyProperty('rotation', layer, new_layer);
-    copyProperty('opacity', layer, new_layer);
+    new_layer['anchorPoint'].setValue( layer['anchorPoint'].value );
+    new_layer['position'].setValue( layer['position'].value );
+    new_layer['scale'].setValue( layer['scale'].value );
+    new_layer['rotation'].setValue( layer['rotation'].value );
+    new_layer['opacity'].setValue( layer['opacity'].value );
 
     return new_layer;
-
 }
+
+var treeChildPrefix = "⌞ ";
+var propertiesBlacklist = [
+    'ADBE Vector Taper StartWidthPx',
+    'ADBE Vector Taper EndWidthPx',
+    'ADBE Vector Taper Wave Cycles',
+    'ADBE Vector Stroke Dashes',
+    'ADBE Vector Materials Group',
+];
 
 /**
  * Copy properties of a layer to another (recursive).
@@ -134,119 +141,68 @@ function emptyDuplicateLayer(layer) {
  * @param {Number} level 
  */
 function copyProperties(origin, target, level) {
-    var indent = repeatStr("  ", level === undefined ? 0 : level);
-    var prefix = indent + "⌞-";
+    var indent = repeatStr("  ", level);
 
-    cDebug(indent + origin.name);
+    // if(level === 0) {
+        cDebug(indent + origin.name);
+    // }
 
+    // Process (copy) each property of the origin to the target
     for(var i=1; i <= origin.numProperties; i++) {
+        var originalProp = origin.property(i);
+        var matchName = originalProp.matchName;
 
-        var _prop = origin.property(i);
+        // Do not copy disabled properties
+        if(!originalProp.enabled) {
+            cDebug(indent + treeChildPrefix + matchName + " (skipped: disabled)");
+            continue;
+        };
+        
 
-        if(!_prop.enabled || !target.canAddProperty(_prop.matchName)) return;
+        // Get or create the target property
+        var targetProp = target.property(matchName);
 
-        // Skipped properties
-        if(arrayIncludes(['ADBE Vector Materials Group'], _prop.matchName)) {
-            cDebug(prefix + _prop.matchName + " (skipped)");
+        if(!targetProp) {
+            targetProp = target.addProperty(matchName);
+        }
+        
+        // Still no property ? Then the property is probably not supported
+        if(!targetProp) {
+            cDebug(indent + treeChildPrefix + matchName + " (skipped: cannot be added)");
             continue;
         }
 
-        cDebug(prefix + _prop.matchName);
-
-        var prop = target.addProperty(_prop.matchName);
-
-        switch (_prop.matchName) {
-
-            case 'ADBE Vector Filter - Merge':
-            copyProperty('mode', _prop, prop)
-            break;
-
-            case 'ADBE Vector Graphic - Stroke':
-            copyProperty('composite', _prop, prop);
-            copyProperty('color', _prop, prop);
-            copyProperty('strokeWidth', _prop, prop);
-            copyProperty('lineCap', _prop, prop);
-            copyProperty('lineJoin', _prop, prop);
-            copyProperty('miterLimit', _prop, prop);
-            break;
-
-            case 'ADBE Vector Graphic - Fill':
-            copyProperty('composite', _prop, prop);
-            copyProperty('fillRule', _prop, prop);
-            copyProperty('color', _prop, prop);
-            break;
-
-            case 'ADBE Vector Transform Group':
-            copyProperty('anchorPoint', _prop, prop);
-            copyProperty('position', _prop, prop);
-            copyProperty('scale', _prop, prop);
-            copyProperty('skew', _prop, prop);
-            copyProperty('skewAxis', _prop, prop);
-            copyProperty('rotation', _prop, prop);
-            copyProperty('opacity', _prop, prop);
-            break;
-
-            case 'ADBE Vector Shape - Rect':
-            copyProperty('shapeDirection', _prop, prop)
-            copyProperty('size', _prop, prop)
-            copyProperty('position', _prop, prop)
-            copyProperty('roundness', _prop, prop)
-            break;
-
-            case 'ADBE Vector Shape - Ellipse':
-            copyProperty('shapeDirection', _prop, prop)
-            copyProperty('size', _prop, prop)
-            copyProperty('position', _prop, prop)
-            break;
-
-            case 'ADBE Vector Shape - Star':
-            copyProperty('shapeDirection', _prop, prop)
-            copyProperty('type', _prop, prop)
-            copyProperty('points', _prop, prop)
-            copyProperty('position', _prop, prop)
-            copyProperty('rotation', _prop, prop)
-            copyProperty('innerRadius', _prop, prop)
-            copyProperty('outerRadius', _prop, prop)
-            copyProperty('innerRoundness', _prop, prop)
-            copyProperty('outerRoundness', _prop, prop)
-            break;
-
-            case 'ADBE Root Vectors Group':
-            case 'ADBE Vectors Group':
-            case 'ADBE Vector Group':
-            copyProperties(_prop, prop, level + 1);
-            break;
-
-            case 'ADBE Vector Shape - Group':
-            prop.property('ADBE Vector Shape').setValue( _prop.property('ADBE Vector Shape').value );
-            break;
-
-            // case 'Vector Stroke Taper':
-            // copyProperty('startLength', _prop, prop);
-            // copyProperty('endLength', _prop, prop);
-            // copyProperty('startWidth', _prop, prop);
-            // copyProperty('endWidth', _prop, prop);
-            // copyProperty('startEase', _prop, prop);
-            // copyProperty('endEase', _prop, prop);
-            // break;
-
-            case 'ADBE Vector Blend Mode':
-            prop.setValue( _prop.value );
-            break;
-
-            default:
-            cDebug(prefix + '>> not supported!');
-            break;
+        // Skip properties that cannot be set without being displayed
+        if(arrayIncludes(propertiesBlacklist, matchName)) {
+            cDebug(indent + "⚬ " + matchName + " (skipped: not editable when hidden)");
+            continue;
+        }
+        
+        // Handle property
+        if(typeof originalProp.setValue === "function") {
+            cDebug(indent + treeChildPrefix + matchName);
+            targetProp.setValue(originalProp.value);
+            continue;
+        }
+        
+        // Handle property groups/layers
+        if(originalProp.numProperties > 0) {
+            cDebug(indent + treeChildPrefix + matchName);
+            copyProperties(originalProp, targetProp, level + 1);
+            continue;
         }
 
+        cDebug(indent + "⦵ " + matchName + " (skipped: no reason)");
     }
-
 }
 
-function copyProperty(name, origin, target) {
-    target[name].setValue( origin[name].value );
-}
-
+/**
+ * Check if an element (the needle) is present in a given array.
+ * 
+ * @param {Array} arr 
+ * @param {*} needle 
+ * @returns Boolean
+ */
 function arrayIncludes(arr, needle) {
     for(var i=arr.length - 1; i>=0; i--){
         if(arr[i] === needle) {
@@ -257,6 +213,13 @@ function arrayIncludes(arr, needle) {
     return false;
 }
 
+/**
+ * Repeat a string a given times into a single string output.
+ * 
+ * @param {String} str 
+ * @param {Number} amount 
+ * @returns String
+ */
 function repeatStr(str, amount) {
     var rtn = "";
     for(var i=0; i<amount; i++) {
@@ -266,7 +229,6 @@ function repeatStr(str, amount) {
 }
 
 function createUI(that) {
-
     if(that instanceof Panel) {
 
         var _panel = that;
@@ -276,13 +238,13 @@ function createUI(that) {
         var _panel = new Window('palette', configs.title, undefined, {
             resizeable : true,
         });
+
         _panel.show();
 
     }
 
     var btn = _panel.add("button", [10, 10, 100, 30], "Explode layer");
 
-    // _panel.text = configs.title;
     _panel.bounds.width = 120;
     _panel.bounds.height = 40;
 
