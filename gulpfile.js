@@ -9,7 +9,7 @@ gulp.task('dev', function (cb) {
 
     pump(
         [
-            gulp.src(['src/config-dev.jsx', 'src/explode_shape_layer.jsx']),
+            gulp.src(['src/config.jsx', 'src/explode_shape_layer.jsx']),
             resolveDependencies({ pattern: /\* @requires [\s-]*(.*\.jsx)/g }),
             concat('explode_shape_layer.jsx'),
             gulp.dest('dist/'),
@@ -26,7 +26,7 @@ gulp.task('prod', function (cb) {
 
     pump(
         [
-            gulp.src(['src/config-prod.jsx', 'src/explode_shape_layer.jsx']),
+            gulp.src(['src/config.jsx', 'src/explode_shape_layer.jsx']),
             resolveDependencies({ pattern: /\* @requires [\s-]*(.*\.jsx)/g }),
             concat('explode_shape_layer.jsx'),
             gulp.dest('dist/'),
@@ -41,6 +41,6 @@ gulp.task('prod', function (cb) {
 
 gulp.task('watch', function () {
 
-    gulp.watch('src/*', ['dev']);
+    gulp.watch('src/*', gulp.series('dev'));
 
 });
